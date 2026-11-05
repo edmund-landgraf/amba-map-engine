@@ -1,0 +1,4 @@
+matplotlib
+pytest
+coverage
+PyQt5

@@ -3,6 +3,7 @@ import sharp from "sharp";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateMap } from "./generator.js";
+import { generateWithDonjuan } from "./donjuan.js";
 import { listMaps, saveMap } from "./db.js";
 import type { MapRequest } from "../shared/map.js";
 
@@ -23,6 +24,26 @@ app.post("/api/maps/generate", async (req, res) => {
   });
   if (body.persist) await saveMap(map);
   res.json(map);
+});
+app.post("/api/maps/generate/donjuan", async (req, res) => {
+  const body = req.body as Partial<MapRequest>;
+  try {
+    const result = await generateWithDonjuan({
+      title: body.title,
+      seed: String(body.seed || "amber-1"),
+      provider: "amba-native",
+      profile: "dungeon",
+      width: Number(body.width || 32), height: Number(body.height || 24),
+      density: Number(body.density || 0.55), grid: body.grid !== false,
+      cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5),
+      labelMode: body.labelMode || "off", showTitle: body.showTitle !== false,
+      showProps: body.showProps !== false, waterLevel: Number(body.waterLevel || 0),
+      style: body.style || "tactical"
+    });
+    res.json({ ...result, engine: "donjuan" });
+  } catch (error) {
+    res.status(503).json({ error: error instanceof Error ? error.message : "DonJuan is unavailable" });
+  }
 });
 app.post("/api/maps/render/png", async (req, res) => {
   const body = req.body as Partial<MapRequest>;

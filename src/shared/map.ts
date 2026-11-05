@@ -23,6 +23,9 @@ export type MapRequest = {
 
 export type GeneratedMap = MapRequest & {
   svg: string;
+  imageDataUrl?: string;
+  engine?: "native" | "donjuan";
+  scene?: unknown;
   createdAt: string;
   foundry: {
     sceneWidthPx: number;

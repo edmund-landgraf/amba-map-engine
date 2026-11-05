@@ -13,3 +13,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 AMBA's renderer, UI, VTT metadata model, and AMBA integration code are original project code. Watabou and Gozzys are reference products/providers; their source code and assets are not included.
+
+## DonJuan
+
+This repository vendors [tmcclintock/donjuan](https://github.com/tmcclintock/donjuan) under `vendor/donjuan`. DonJuan is released under the CC0 1.0 Universal public-domain dedication. Copyright and license details are preserved in `vendor/donjuan/LICENSE`.

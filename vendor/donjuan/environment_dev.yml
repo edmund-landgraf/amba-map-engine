@@ -1,0 +1,17 @@
+name: djdev
+channels:
+ - conda-forge
+ - anaconda
+dependencies:
+ - python>=3.6
+ - matplotlib
+ - pre-commit
+ - black
+ - flake8
+ - isort
+ - darglint
+ - pytest
+ - coverage
+ - sphinx
+ - sphinx_rtd_theme
+ - sphinx-autoapi
