@@ -38,12 +38,19 @@ function carveLine(floor: boolean[][], from: Room, to: Room, rng: () => number, 
   if (horizontalFirst) { walk("x"); walk("y"); } else { walk("y"); walk("x"); }
   carve(to.cx, to.cy);
   const horizontal = Math.abs(to.cx - from.cx) >= Math.abs(to.cy - from.cy);
+  const addDoor = (door: { x: number; y: number; orientation: "vertical" | "horizontal"; state: "closed" }) => {
+    const crossesFloor = door.orientation === "vertical"
+      ? Boolean(floor[door.y]?.[door.x - 1] && floor[door.y]?.[door.x])
+      : Boolean(floor[door.y - 1]?.[door.x] && floor[door.y]?.[door.x]);
+    if (!crossesFloor) return;
+    if (!doors.some((existing) => existing.x === door.x && existing.y === door.y && existing.orientation === door.orientation)) doors.push(door);
+  };
   if (horizontal) {
     const fromRight = to.cx > from.cx;
-    doors.push({ x: fromRight ? from.x + from.w : from.x, y: from.cy, orientation: "vertical", state: "closed" });
+    addDoor({ x: fromRight ? from.x + from.w : from.x, y: from.cy, orientation: "vertical", state: "closed" });
   } else {
     const fromBottom = to.cy > from.cy;
-    doors.push({ x: from.cx, y: fromBottom ? from.y + from.h : from.y, orientation: "horizontal", state: "closed" });
+    addDoor({ x: from.cx, y: fromBottom ? from.y + from.h : from.y, orientation: "horizontal", state: "closed" });
   }
 }
 
