@@ -28,6 +28,7 @@ export type GeneratedMap = MapRequest & {
   scene?: unknown;
   rooms?: Array<{ id: string; number: number; role: "entrance" | "encounter" | "hazard" | "treasure" | "boss" | "secret"; x: number; y: number; width: number; height: number; shape: "rect" | "circle" }>;
   features?: Array<{ id: string; kind: "entrance" | "encounter" | "hazard" | "treasure" | "boss" | "secret-door"; roomId: string; x: number; y: number }>;
+  roomLabels?: Array<{ roomId: string; number: number; label: string; role: string }>;
   createdAt: string;
   foundry: {
     sceneWidthPx: number;

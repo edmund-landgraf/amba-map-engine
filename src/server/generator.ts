@@ -119,10 +119,8 @@ export function generateMap(input: MapRequest): GeneratedMap {
     else if (room.role === "treasure") lines.push(`<path d="M${(room.cx - .45) * scale} ${(room.cy + .45) * scale}L${(room.cx + .45) * scale} ${(room.cy + .45) * scale}L${(room.cx + .45) * scale} ${(room.cy - .1) * scale}L${(room.cx - .45) * scale} ${(room.cy - .1) * scale}Z" fill="${colors.detail}" opacity=".8"/>`);
     else if (index % 2 === 0) lines.push(`<rect x="${px * scale + 5}" y="${py * scale + 5}" width="${scale - 10}" height="${scale - 10}" fill="${colors.detail}" opacity=".65"/>`);
   });
-  if (request.labelMode !== "off") rooms.forEach((room, index) => {
-    const label = request.labelMode === "numbers" ? String(index + 1).padStart(2, "0") : ["Entry", "Hall", "Guardroom", "Shrine", "Vault", "Crossing", "Boss"][index % 7];
-    lines.push(`<text x="${(room.cx + .5) * scale}" y="${(room.cy + .2) * scale}" text-anchor="middle" fill="${colors.text}" font-family="system-ui, sans-serif" font-size="${Math.max(10, scale * .48)}" font-weight="700">${label}</text>`);
-  });
+  // Room text is deliberately not painted into the battlemap. It is returned as
+  // a separate GM annotation layer so the playable floor stays unobstructed.
   if (request.grid) {
     for (let x = 0; x <= width; x += scale) lines.push(`<path d="M${x} 0V${height}" stroke="${colors.grid}" stroke-opacity=".16"/>`);
     for (let y = 0; y <= height; y += scale) lines.push(`<path d="M0 ${y}H${width}" stroke="${colors.grid}" stroke-opacity=".16"/>`);
@@ -131,5 +129,7 @@ export function generateMap(input: MapRequest): GeneratedMap {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${request.title}"><title>${request.title}</title>${lines.join("")}${title}</svg>`;
   const roomData = rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, role: room.role, x: room.x, y: room.y, width: room.w, height: room.h, shape: room.shape }));
   const features = rooms.filter((room) => room.role !== "encounter").map((room, index) => ({ id: `feature-${index + 1}`, kind: room.role === "secret" ? "secret-door" as const : room.role, roomId: `room-${rooms.indexOf(room) + 1}`, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize }));
-  return { ...request, svg, engine: "native", rooms: roomData, features, createdAt: new Date().toISOString(), foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft", doors, roomAnchors: rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize })) }, capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
+  const roleLabels: Record<Room["role"], string> = { entrance: "Entrance", encounter: "Encounter", hazard: "Hazard", treasure: "Treasure", boss: "Boss", secret: "Secret" };
+  const roomLabels = rooms.map((room, index) => ({ roomId: `room-${index + 1}`, number: index + 1, label: request.labelMode === "names" ? roleLabels[room.role] : `Room ${String(index + 1).padStart(2, "0")}`, role: room.role }));
+  return { ...request, svg, engine: "native", rooms: roomData, features, roomLabels, createdAt: new Date().toISOString(), foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft", doors, roomAnchors: rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize })) }, capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
 }
