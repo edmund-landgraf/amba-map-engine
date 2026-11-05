@@ -22,7 +22,7 @@ function random(seed: string) {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-function carveLine(floor: boolean[][], from: Room, to: Room, rng: () => number) {
+function carveLine(floor: boolean[][], from: Room, to: Room, rng: () => number, doors: Array<{ x: number; y: number; orientation: "vertical" | "horizontal"; state: "closed" }>) {
   let x = from.cx, y = from.cy;
   const horizontalFirst = rng() > 0.45;
   const carve = (cx: number, cy: number) => {
@@ -38,6 +38,14 @@ function carveLine(floor: boolean[][], from: Room, to: Room, rng: () => number) 
   carve(x, y);
   if (horizontalFirst) { walk("x"); walk("y"); } else { walk("y"); walk("x"); }
   carve(to.cx, to.cy);
+  const horizontal = Math.abs(to.cx - from.cx) >= Math.abs(to.cy - from.cy);
+  if (horizontal) {
+    const fromRight = to.cx > from.cx;
+    doors.push({ x: fromRight ? from.x + from.w : from.x, y: from.cy, orientation: "vertical", state: "closed" });
+  } else {
+    const fromBottom = to.cy > from.cy;
+    doors.push({ x: from.cx, y: fromBottom ? from.y + from.h : from.y, orientation: "horizontal", state: "closed" });
+  }
 }
 
 export function generateMap(input: MapRequest): GeneratedMap {
@@ -53,6 +61,7 @@ export function generateMap(input: MapRequest): GeneratedMap {
   const rng = random(`${request.seed}/${request.provider}/${request.profile}`);
   const floor = Array.from({ length: request.height }, () => Array<boolean>(request.width).fill(false));
   const rooms: Room[] = [];
+  const doors: Array<{ x: number; y: number; orientation: "vertical" | "horizontal"; state: "closed" }> = [];
   const target = Math.round(7 + request.density * 6);
   for (let attempt = 0; attempt < target * 30 && rooms.length < target; attempt += 1) {
     const w = 4 + Math.floor(rng() * 6), h = 4 + Math.floor(rng() * 6);
@@ -64,8 +73,8 @@ export function generateMap(input: MapRequest): GeneratedMap {
     for (let ry = y; ry < y + h; ry += 1) for (let rx = x; rx < x + w; rx += 1) floor[ry][rx] = true;
   }
   rooms.sort((a, b) => a.cx + a.cy - b.cx - b.cy);
-  for (let i = 1; i < rooms.length; i += 1) carveLine(floor, rooms[i - 1], rooms[i], rng);
-  for (let i = 0; i < rooms.length - 2; i += 1) if (rng() < 0.2 + request.density * 0.3) carveLine(floor, rooms[i], rooms[i + 2], rng);
+  for (let i = 1; i < rooms.length; i += 1) carveLine(floor, rooms[i - 1], rooms[i], rng, doors);
+  for (let i = 0; i < rooms.length - 2; i += 1) if (rng() < 0.2 + request.density * 0.3) carveLine(floor, rooms[i], rooms[i + 2], rng, doors);
 
   const colors: Palette = request.style === "wilderness"
     ? { bg: "#dce8d1", floor: "#b8cba1", wall: "#395d3e", accent: "#6e9a67", detail: "#876a48", text: "#253e2a", grid: "#47634b" }
@@ -87,6 +96,14 @@ export function generateMap(input: MapRequest): GeneratedMap {
     if (!floor[y]?.[x - 1]) wall(x, y, 0, 1);
     if (request.waterLevel > 0 && (request.profile === "cave" || request.profile === "wilderness") && rng() < request.waterLevel * 0.035) cell(x, y, colors.accent, 0.72);
   }
+  doors.forEach((door) => {
+    const x = door.x * scale, y = door.y * scale;
+    if (door.orientation === "vertical") {
+      lines.push(`<rect x="${x - 3}" y="${y * 0 + y - scale * .34}" width="6" height="${scale * .68}" rx="2" fill="${colors.accent}" stroke="${colors.wall}" stroke-width="1"/>`);
+    } else {
+      lines.push(`<rect x="${x - scale * .34}" y="${y - 3}" width="${scale * .68}" height="6" rx="2" fill="${colors.accent}" stroke="${colors.wall}" stroke-width="1"/>`);
+    }
+  });
   if (request.showProps) rooms.forEach((room, index) => {
     const px = room.x + 1 + Math.floor(rng() * Math.max(1, room.w - 2)), py = room.y + 1 + Math.floor(rng() * Math.max(1, room.h - 2));
     if (request.profile === "wilderness") lines.push(`<circle cx="${(px + .5) * scale}" cy="${(py + .5) * scale}" r="${Math.max(3, scale * .16)}" fill="${colors.detail}" opacity=".8"/>`);
@@ -103,5 +120,5 @@ export function generateMap(input: MapRequest): GeneratedMap {
   }
   const title = request.showTitle ? `<text x="${scale}" y="${height - scale * .45}" fill="${colors.text}" font-family="system-ui, sans-serif" font-size="${scale * .55}" opacity=".85">${request.title}</text>` : "";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${request.title}"><title>${request.title}</title>${lines.join("")}${title}</svg>`;
-  return { ...request, svg, createdAt: new Date().toISOString(), foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft" }, capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
+  return { ...request, svg, createdAt: new Date().toISOString(), foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft", doors, roomAnchors: rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize })) }, capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
 }

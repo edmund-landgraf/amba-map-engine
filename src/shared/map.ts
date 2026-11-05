@@ -30,6 +30,8 @@ export type GeneratedMap = MapRequest & {
     gridSizePx: number;
     gridDistance: number;
     gridUnits: "ft";
+    doors: Array<{ x: number; y: number; orientation: "vertical" | "horizontal"; state: "closed" }>;
+    roomAnchors: Array<{ id: string; number: number; x: number; y: number }>;
   };
   capabilities: {
     preview: true;
