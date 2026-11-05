@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Map {
+  id          String   @id @default(cuid())
+  title       String
+  seed        String
+  provider    String
+  profile     String
+  svg         String
+  parameters  Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([seed])
+  @@index([provider, profile])
+}
