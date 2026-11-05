@@ -1,6 +1,6 @@
 # AMBA Map Engine
 
-Standalone seeded map-image generation for AMBA. The app has three provider paths in its contract—Watabou, Gozzys, and AMBA Native—and currently ships a native deterministic SVG preview for dungeon, cave, and glade profiles.
+Standalone seeded battlemap-image generation for AMBA. The app has three provider paths in its contract—Watabou, Gozzys, and AMBA Native—and currently ships a native deterministic SVG/PNG preview for dungeon rooms, caves, and wilderness encounters.
 
 The authoring direction also takes cues from Inkarnate: maps will become layered scenes with reusable, license-aware assets, copyable scene groups, custom layers, autosave, and high-resolution exports. Those are deliberately sequenced after the current seeded image-generation slice.
 
@@ -43,9 +43,13 @@ Example:
   "height": 24,
   "density": 0.55,
   "grid": true,
+  "cellSize": 70,
+  "scaleFeet": 5,
   "persist": true
 }
 ```
+
+The generated response includes Foundry-oriented scene metadata: image dimensions, grid size in pixels, grid distance, and grid units. PNG export is available at `POST /api/maps/render/png`.
 
 ## AMBA hooks
 
@@ -53,7 +57,7 @@ The provider and artifact fields are already modeled in the shared request/resul
 
 ## Product direction
 
-- **Now:** seed + provider + profile → deterministic map image preview.
+- **Now:** seed + provider + battlemap profile → deterministic grid-aligned map image preview and PNG export.
 - **Next:** persist render layers and map revisions; add PNG export and a layer visibility panel.
 - **Then:** add brush/shape overlays, reusable scene stamps, custom asset uploads, copy/paste groups, autosave, and player-safe/GM-safe layer variants.
 - **Later:** add high-resolution tiled export, VTT geometry, and AMBA-linked encounter anchors.

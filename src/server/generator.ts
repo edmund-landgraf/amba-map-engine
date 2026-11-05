@@ -33,7 +33,9 @@ export function generateMap(input: MapRequest): GeneratedMap {
     width: clamp(Math.round(input.width || 32), 16, 80),
     height: clamp(Math.round(input.height || 24), 12, 60),
     density: clamp(Number(input.density || 0.55), 0.2, 0.9),
-    grid: Boolean(input.grid)
+    grid: Boolean(input.grid),
+    cellSize: clamp(Math.round(input.cellSize || 70), 20, 200),
+    scaleFeet: clamp(Math.round(input.scaleFeet || 5), 1, 100)
   };
   const rng = random(`${request.seed}/${request.provider}/${request.profile}`);
   const rooms: Room[] = [];
@@ -47,7 +49,7 @@ export function generateMap(input: MapRequest): GeneratedMap {
     if (!overlaps) rooms.push({ x, y, w, h });
   }
   rooms.sort((a, b) => a.x + a.y - (b.x + b.y));
-  const colors = request.profile === "glade"
+  const colors = request.profile === "wilderness"
     ? { bg: "#dce8d1", floor: "#bdcfab", wall: "#476348", accent: "#7fa36d", detail: "#8f6f4d" }
     : request.profile === "cave"
       ? { bg: "#18212b", floor: "#47515b", wall: "#9aa6ad", accent: "#4c7890", detail: "#c4a66a" }
@@ -61,16 +63,16 @@ export function generateMap(input: MapRequest): GeneratedMap {
   const centers: Array<[number, number]> = [];
   rooms.forEach((room, index) => {
     const x = room.x * scale, y = room.y * scale, w = room.w * scale, h = room.h * scale;
-    rect(x, y, w, h, colors.floor, colors.wall, 3, `rx="${request.profile === "cave" || request.profile === "glade" ? 12 : 2}"`);
+    rect(x, y, w, h, colors.floor, colors.wall, 3, `rx="${request.profile === "cave" || request.profile === "wilderness" ? 12 : 2}"`);
     centers.push([x + w / 2, y + h / 2]);
     if (index > 0) {
       const [px, py] = centers[index - 1];
       const cx = x + w / 2, cy = y + h / 2;
-      const corridor = request.profile === "glade" ? colors.accent : colors.floor;
+      const corridor = request.profile === "wilderness" ? colors.accent : colors.floor;
       lines.push(`<path d="M ${px} ${py} L ${cx} ${py} L ${cx} ${cy}" fill="none" stroke="${colors.wall}" stroke-width="${Math.max(8, scale * 0.65)}" stroke-linecap="square"/>`);
       lines.push(`<path d="M ${px} ${py} L ${cx} ${py} L ${cx} ${cy}" fill="none" stroke="${corridor}" stroke-width="${Math.max(5, scale * 0.42)}" stroke-linecap="square"/>`);
     }
-    if (request.profile === "glade") {
+    if (request.profile === "wilderness") {
       for (let p = 0; p < 2 + Math.floor(rng() * 4); p += 1) {
         const tx = x + 8 + rng() * Math.max(8, w - 16), ty = y + 8 + rng() * Math.max(8, h - 16);
         lines.push(`<circle cx="${tx}" cy="${ty}" r="${3 + rng() * 4}" fill="${colors.detail}" opacity=".72"/>`);
@@ -86,5 +88,11 @@ export function generateMap(input: MapRequest): GeneratedMap {
     for (let y = 0; y <= height; y += scale) lines.push(`<path d="M0 ${y}H${width}" stroke="${colors.wall}" stroke-opacity=".14"/>`);
   }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${request.title}"><title>${request.title}</title>${lines.join("")}<text x="${scale}" y="${height - scale * .45}" fill="${colors.wall}" font-family="system-ui, sans-serif" font-size="${scale * .55}" opacity=".8">${request.title}</text></svg>`;
-  return { ...request, svg, createdAt: new Date().toISOString(), capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
+  return {
+    ...request,
+    svg,
+    createdAt: new Date().toISOString(),
+    foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft" },
+    capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" }
+  };
 }

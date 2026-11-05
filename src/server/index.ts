@@ -1,4 +1,5 @@
 import express from "express";
+import sharp from "sharp";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateMap } from "./generator.js";
@@ -16,11 +17,24 @@ app.post("/api/maps/generate", async (req, res) => {
     title: body.title,
     seed: String(body.seed || "amber-1"),
     provider: body.provider === "watabou" || body.provider === "gozzys" ? body.provider : "amba-native",
-    profile: body.profile === "cave" || body.profile === "glade" ? body.profile : "dungeon",
-    width: Number(body.width || 32), height: Number(body.height || 24), density: Number(body.density || 0.55), grid: body.grid !== false
+    profile: body.profile === "cave" || body.profile === "wilderness" ? body.profile : "dungeon",
+    width: Number(body.width || 32), height: Number(body.height || 24), density: Number(body.density || 0.55), grid: body.grid !== false,
+    cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5)
   });
   if (body.persist) await saveMap(map);
   res.json(map);
+});
+app.post("/api/maps/render/png", async (req, res) => {
+  const body = req.body as Partial<MapRequest>;
+  const map = generateMap({
+    title: body.title, seed: String(body.seed || "amber-1"),
+    provider: body.provider === "watabou" || body.provider === "gozzys" ? body.provider : "amba-native",
+    profile: body.profile === "cave" || body.profile === "wilderness" ? body.profile : "dungeon",
+    width: Number(body.width || 32), height: Number(body.height || 24), density: Number(body.density || 0.55), grid: body.grid !== false,
+    cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5)
+  });
+  const png = await sharp(Buffer.from(map.svg)).png().toBuffer();
+  res.type("png").send(png);
 });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
