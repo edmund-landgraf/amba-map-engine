@@ -4,6 +4,8 @@ Standalone seeded tactical-map generation for AMBA. The app has three provider p
 
 This is intentionally not a general-purpose map editor. Its job is to generate the same useful encounter-scale maps as the classic procedural tools, modernize the controls, and produce richer metadata for Foundry and other VTTs.
 
+The AMBA Native layout engine is being built as a TypeScript adaptation of the public MIT-licensed layout ideas in [benjcooley/dungeongen](https://github.com/benjcooley/dungeongen): occupancy-based room placement, room shapes, passage routing, doors, water, and validation. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.
+
 ## Stack
 
 - Node.js + Express API
