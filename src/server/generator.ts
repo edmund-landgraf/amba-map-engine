@@ -1,6 +1,6 @@
 import type { GeneratedMap, MapRequest } from "../shared/map.js";
 
-type Room = { x: number; y: number; w: number; h: number; cx: number; cy: number };
+type Room = { x: number; y: number; w: number; h: number; cx: number; cy: number; shape: "rect" | "circle" };
 type Palette = { bg: string; floor: string; wall: string; accent: string; detail: string; text: string; grid: string };
 
 function hash(input: string) {
@@ -26,10 +26,7 @@ function carveLine(floor: boolean[][], from: Room, to: Room, rng: () => number, 
   let x = from.cx, y = from.cy;
   const horizontalFirst = rng() > 0.45;
   const carve = (cx: number, cy: number) => {
-    for (let dy = -1; dy <= 1; dy += 1) for (let dx = -1; dx <= 1; dx += 1) {
-      const nx = cx + dx, ny = cy + dy;
-      if (floor[ny]?.[nx] !== undefined) floor[ny][nx] = true;
-    }
+    if (floor[cy]?.[cx] !== undefined) floor[cy][cx] = true;
   };
   const walk = (axis: "x" | "y") => {
     if (axis === "x") while (x !== to.cx) { x += x < to.cx ? 1 : -1; carve(x, y); }
@@ -64,13 +61,16 @@ export function generateMap(input: MapRequest): GeneratedMap {
   const doors: Array<{ x: number; y: number; orientation: "vertical" | "horizontal"; state: "closed" }> = [];
   const target = Math.round(7 + request.density * 6);
   for (let attempt = 0; attempt < target * 30 && rooms.length < target; attempt += 1) {
-    const w = 4 + Math.floor(rng() * 6), h = 4 + Math.floor(rng() * 6);
+    const w = 3 + Math.floor(rng() * 5), h = 3 + Math.floor(rng() * 5);
     const x = 2 + Math.floor(rng() * Math.max(1, request.width - w - 4));
     const y = 2 + Math.floor(rng() * Math.max(1, request.height - h - 4));
     if (rooms.some((room) => x < room.x + room.w + 2 && x + w + 2 > room.x && y < room.y + room.h + 2 && y + h + 2 > room.y)) continue;
-    const room = { x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2) };
+    const room = { x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2), shape: rng() < 0.18 ? "circle" as const : "rect" as const };
     rooms.push(room);
-    for (let ry = y; ry < y + h; ry += 1) for (let rx = x; rx < x + w; rx += 1) floor[ry][rx] = true;
+    for (let ry = y; ry < y + h; ry += 1) for (let rx = x; rx < x + w; rx += 1) {
+      const nx = (rx + .5 - (x + w / 2)) / (w / 2), ny = (ry + .5 - (y + h / 2)) / (h / 2);
+      if (room.shape === "rect" || nx * nx + ny * ny <= 1.05) floor[ry][rx] = true;
+    }
   }
   rooms.sort((a, b) => a.cx + a.cy - b.cx - b.cy);
   for (let i = 1; i < rooms.length; i += 1) carveLine(floor, rooms[i - 1], rooms[i], rng, doors);
