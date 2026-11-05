@@ -49,7 +49,7 @@ Example:
 }
 ```
 
-The generated response includes Foundry-oriented scene metadata: image dimensions, grid size in pixels, grid distance, and grid units. PNG export is available at `POST /api/maps/render/png`.
+The generated response includes VTT-oriented scene metadata: image dimensions, grid size in pixels, grid distance, and grid units. PNG export is available at `POST /api/maps/render/png`. This is not yet a native Foundry or Owlbear scene export; those should be added as explicit adapters once their handoff formats are implemented.
 
 The generator keeps presentation controls explicit and reversible: label mode (`off`, `numbers`, `names`), title visibility, tactical props, water level, style preset, grid visibility, and density are all request parameters. Labels are rendered as their own controlled pass, so a clean Foundry image does not inherit unwanted room text.
 
@@ -78,7 +78,7 @@ The provider and artifact fields are already modeled in the shared request/resul
 
 - **Now:** seed + provider + battlemap profile → deterministic grid-aligned map image preview and PNG export.
 - **Next:** implement real dungeon/cave/wilderness algorithms and derive walls, doors, and room anchors from the same topology.
-- **Then:** add UVTT/Foundry scene bundles, terrain/light regions, player-safe/GM-safe variants, and AMBA-linked encounter anchors.
+- **Then:** add an explicit UVTT scene bundle plus separate Foundry and Owlbear adapters, terrain/light regions, player-safe/GM-safe variants, and AMBA-linked encounter anchors.
 - **Later:** add limited compositing controls only where they improve VTT readability; do not become a full cartography editor.
 
 Inkarnate is a UX reference for clarity and layer visibility, not our product scope: [FAQ](https://inkarnate.com/faq), [2.0 changelog](https://feedback.inkarnate.com/changelog/inkarnate-20-star).
