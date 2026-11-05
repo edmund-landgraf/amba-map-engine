@@ -4,6 +4,12 @@ The goal is a controlled, modern Watabou-like battlemap generator without reimpl
 
 ## Chosen references
 
+### VTT-first engine candidate: DonJuan
+
+[tmcclintock/donjuan](https://github.com/tmcclintock/donjuan) is CC0-licensed and is the strongest modern reuse candidate for the product's actual purpose: procedural battle maps with Foundry export. It already organizes reusable core grid/space primitives plus dungeon, forest, camp, and village scene packages, and exposes room, hallway, door, renderer, and exporter modules.
+
+The preferred implementation path is to evaluate DonJuan as a worker/engine before expanding our own TypeScript generator. If its Python runtime and output contract fit deployment, AMBA Map Engine should orchestrate it from Node and preserve the returned scene metadata. If the runtime is too heavy, port only the narrow layout/export contract—not the whole renderer.
+
 ### Layout foundation: Ben Cooley
 
 [benjcooley/dungeongen](https://github.com/benjcooley/dungeongen) is MIT licensed and already separates the concerns we need:
@@ -47,11 +53,11 @@ Cartomancer is not an AMBA dependency. Before reusing any code, verify its repos
 
 ## AMBA implementation strategy
 
-1. Port the layout model first: rooms, occupancy grid, passages, doors, room IDs, and validation.
-2. Keep rendering in TypeScript/SVG so the existing Express/Sharp pipeline stays simple.
-3. Add the VTT scene contract directly to the canonical map document.
-4. Add crosshatch, water, props, and rotation as independent renderer layers.
-5. Add Foundry/UVTT adapters only after wall and door geometry is validated against the same occupancy grid.
+1. Evaluate DonJuan as the first reusable runtime for dungeon/forest/camp scene generation and Foundry export.
+2. Use Ben's layout model when DonJuan lacks a needed profile or when a TypeScript-native path is materially simpler.
+3. Use Wildfirebill's renderer ideas for visual layers rather than recreating them blindly.
+4. Keep AMBA's Node/Express service as the orchestrator: seeds, presets, persistence, provenance, and AMBA hooks.
+5. Normalize all engine results into the AMBA map document and validate wall/door/grid geometry before publishing.
 
 ## What not to do
 
