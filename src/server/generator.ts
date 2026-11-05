@@ -1,6 +1,6 @@
 import type { GeneratedMap, MapRequest } from "../shared/map.js";
 
-type Room = { x: number; y: number; w: number; h: number; cx: number; cy: number; shape: "rect" | "circle" };
+type Room = { x: number; y: number; w: number; h: number; cx: number; cy: number; shape: "rect" | "circle"; role: "entrance" | "encounter" | "hazard" | "treasure" | "boss" | "secret" };
 type Palette = { bg: string; floor: string; wall: string; accent: string; detail: string; text: string; grid: string };
 
 function hash(input: string) {
@@ -26,7 +26,9 @@ function carveLine(floor: boolean[][], from: Room, to: Room, rng: () => number, 
   let x = from.cx, y = from.cy;
   const horizontalFirst = rng() > 0.45;
   const carve = (cx: number, cy: number) => {
-    if (floor[cy]?.[cx] !== undefined) floor[cy][cx] = true;
+    for (let oy = 0; oy < 2; oy += 1) for (let ox = 0; ox < 2; ox += 1) {
+      if (floor[cy + oy]?.[cx + ox] !== undefined) floor[cy + oy][cx + ox] = true;
+    }
   };
   const walk = (axis: "x" | "y") => {
     if (axis === "x") while (x !== to.cx) { x += x < to.cx ? 1 : -1; carve(x, y); }
@@ -59,22 +61,27 @@ export function generateMap(input: MapRequest): GeneratedMap {
   const floor = Array.from({ length: request.height }, () => Array<boolean>(request.width).fill(false));
   const rooms: Room[] = [];
   const doors: Array<{ x: number; y: number; orientation: "vertical" | "horizontal"; state: "closed" }> = [];
-  const target = Math.round(7 + request.density * 6);
+  const target = Math.round(8 + request.density * 7);
   for (let attempt = 0; attempt < target * 30 && rooms.length < target; attempt += 1) {
-    const w = 3 + Math.floor(rng() * 5), h = 3 + Math.floor(rng() * 5);
+    const w = 4 + Math.floor(rng() * 6), h = 4 + Math.floor(rng() * 6);
     const x = 2 + Math.floor(rng() * Math.max(1, request.width - w - 4));
     const y = 2 + Math.floor(rng() * Math.max(1, request.height - h - 4));
     if (rooms.some((room) => x < room.x + room.w + 2 && x + w + 2 > room.x && y < room.y + room.h + 2 && y + h + 2 > room.y)) continue;
-    const room = { x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2), shape: rng() < 0.18 ? "circle" as const : "rect" as const };
+    const room = { x, y, w, h, cx: Math.floor(x + w / 2), cy: Math.floor(y + h / 2), shape: rng() < 0.24 ? "circle" as const : "rect" as const, role: "encounter" as const };
     rooms.push(room);
     for (let ry = y; ry < y + h; ry += 1) for (let rx = x; rx < x + w; rx += 1) {
       const nx = (rx + .5 - (x + w / 2)) / (w / 2), ny = (ry + .5 - (y + h / 2)) / (h / 2);
       if (room.shape === "rect" || nx * nx + ny * ny <= 1.05) floor[ry][rx] = true;
     }
   }
+  if (rooms.length > 0) rooms[0].role = "entrance";
+  if (rooms.length > 1) rooms[rooms.length - 1].role = "boss";
+  if (rooms.length > 3) rooms[Math.floor(rooms.length / 2)].role = "treasure";
+  if (rooms.length > 5) rooms[1].role = "hazard";
+  if (rooms.length > 7) rooms[rooms.length - 2].role = "secret";
   rooms.sort((a, b) => a.cx + a.cy - b.cx - b.cy);
   for (let i = 1; i < rooms.length; i += 1) carveLine(floor, rooms[i - 1], rooms[i], rng, doors);
-  for (let i = 0; i < rooms.length - 2; i += 1) if (rng() < 0.2 + request.density * 0.3) carveLine(floor, rooms[i], rooms[i + 2], rng, doors);
+  for (let i = 0; i < rooms.length - 2; i += 1) if (rng() < 0.24 + request.density * 0.32) carveLine(floor, rooms[i], rooms[i + 2], rng, doors);
 
   const colors: Palette = request.style === "wilderness"
     ? { bg: "#dce8d1", floor: "#b8cba1", wall: "#395d3e", accent: "#6e9a67", detail: "#876a48", text: "#253e2a", grid: "#47634b" }
@@ -108,10 +115,12 @@ export function generateMap(input: MapRequest): GeneratedMap {
     const px = room.x + 1 + Math.floor(rng() * Math.max(1, room.w - 2)), py = room.y + 1 + Math.floor(rng() * Math.max(1, room.h - 2));
     if (request.profile === "wilderness") lines.push(`<circle cx="${(px + .5) * scale}" cy="${(py + .5) * scale}" r="${Math.max(3, scale * .16)}" fill="${colors.detail}" opacity=".8"/>`);
     else if (request.profile === "cave") lines.push(`<circle cx="${(px + .5) * scale}" cy="${(py + .5) * scale}" r="${Math.max(4, scale * .22)}" fill="${colors.accent}" opacity=".7"/>`);
+    else if (room.role === "boss") lines.push(`<circle cx="${(room.cx + .5) * scale}" cy="${(room.cy + .5) * scale}" r="${scale * .3}" fill="none" stroke="${colors.detail}" stroke-width="3"/><circle cx="${(room.cx + .5) * scale}" cy="${(room.cy + .5) * scale}" r="${scale * .12}" fill="${colors.detail}"/>`);
+    else if (room.role === "treasure") lines.push(`<path d="M${(room.cx - .45) * scale} ${(room.cy + .45) * scale}L${(room.cx + .45) * scale} ${(room.cy + .45) * scale}L${(room.cx + .45) * scale} ${(room.cy - .1) * scale}L${(room.cx - .45) * scale} ${(room.cy - .1) * scale}Z" fill="${colors.detail}" opacity=".8"/>`);
     else if (index % 2 === 0) lines.push(`<rect x="${px * scale + 5}" y="${py * scale + 5}" width="${scale - 10}" height="${scale - 10}" fill="${colors.detail}" opacity=".65"/>`);
   });
   if (request.labelMode !== "off") rooms.forEach((room, index) => {
-    const label = request.labelMode === "numbers" ? String(index + 1).padStart(2, "0") : ["Entry", "Hall", "Guardroom", "Shrine", "Vault", "Crossing"][index % 6];
+    const label = request.labelMode === "numbers" ? String(index + 1).padStart(2, "0") : ["Entry", "Hall", "Guardroom", "Shrine", "Vault", "Crossing", "Boss"][index % 7];
     lines.push(`<text x="${(room.cx + .5) * scale}" y="${(room.cy + .2) * scale}" text-anchor="middle" fill="${colors.text}" font-family="system-ui, sans-serif" font-size="${Math.max(10, scale * .48)}" font-weight="700">${label}</text>`);
   });
   if (request.grid) {
@@ -120,5 +129,7 @@ export function generateMap(input: MapRequest): GeneratedMap {
   }
   const title = request.showTitle ? `<text x="${scale}" y="${height - scale * .45}" fill="${colors.text}" font-family="system-ui, sans-serif" font-size="${scale * .55}" opacity=".85">${request.title}</text>` : "";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${request.title}"><title>${request.title}</title>${lines.join("")}${title}</svg>`;
-  return { ...request, svg, createdAt: new Date().toISOString(), foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft", doors, roomAnchors: rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize })) }, capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
+  const roomData = rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, role: room.role, x: room.x, y: room.y, width: room.w, height: room.h, shape: room.shape }));
+  const features = rooms.filter((room) => room.role !== "encounter").map((room, index) => ({ id: `feature-${index + 1}`, kind: room.role === "secret" ? "secret-door" as const : room.role, roomId: `room-${rooms.indexOf(room) + 1}`, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize }));
+  return { ...request, svg, engine: "native", rooms: roomData, features, createdAt: new Date().toISOString(), foundry: { sceneWidthPx: width * request.cellSize / scale, sceneHeightPx: height * request.cellSize / scale, gridSizePx: request.cellSize, gridDistance: request.scaleFeet, gridUnits: "ft", doors, roomAnchors: rooms.map((room, index) => ({ id: `room-${index + 1}`, number: index + 1, x: (room.cx + .5) * request.cellSize, y: (room.cy + .5) * request.cellSize })) }, capabilities: { preview: true, deterministic: true, provider: request.provider, editableTopology: request.provider === "amba-native" } };
 }

@@ -2,7 +2,7 @@
 
 Standalone seeded tactical-map generation for AMBA. The app has three provider paths in its contract—Watabou, Gozzys, and AMBA Native—and currently ships a native deterministic SVG/PNG preview for dungeon rooms, caves, and wilderness encounters.
 
-This is intentionally not a general-purpose map editor. Its job is to generate the same useful encounter-scale maps as the classic procedural tools, modernize the controls, and produce richer metadata for Foundry and other VTTs.
+This is intentionally not a general-purpose map editor. Its first benchmark is the classic seeded one-page dungeon: a connected encounter layout with rooms, passages, doors, a clear entrance, a strong final room, optional treasure/hazard/secret features, room numbering, and clean image output. The controls modernize that workflow while the generated document carries richer metadata for Foundry and other VTTs.
 
 The repo also vendors [DonJuan](https://github.com/tmcclintock/donjuan), a CC0-licensed Python battlemap engine. It generates textured dungeon maps and Foundry scene bundles containing the rendered image, walls, doors, and lights. The Node API exposes it through a thin JSON-lines worker bridge; the TypeScript generator remains available as a dependency-light fallback. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution.
 
@@ -80,6 +80,20 @@ The canonical output should eventually be a small VTT scene bundle, not just a b
 - clean player-safe and annotated GM variants.
 
 The map image remains useful on its own, but VTT geometry and metadata are the product's main differentiator.
+
+## One-page dungeon benchmark
+
+For a dungeon seed, the generator should always produce a playable small adventure space rather than an unstructured scatter of rooms. The benchmark checks that the map has:
+
+- one connected walkable floor network;
+- an identifiable entrance and final/boss room;
+- several encounter rooms plus at least one optional hazard, treasure, or secret feature when the layout is large enough;
+- orthogonal passages with doors represented separately from wall geometry;
+- stable room IDs and numbered anchors that survive image restyling;
+- labels and titles that can be switched off without changing topology;
+- exact grid dimensions and seed-preserving regeneration.
+
+The native generator now emits `rooms` and `features` alongside the image and Foundry metadata. DonJuan remains the higher-fidelity rendering path for comparison.
 
 ## AMBA hooks
 
