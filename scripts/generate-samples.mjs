@@ -7,9 +7,9 @@ const outputDir = path.resolve("samples");
 await fs.mkdir(outputDir, { recursive: true });
 
 const samples = [
-  { file: "01-dungeon-ironbriar.png", title: "Ironbriar Cache", seed: "ironbriar-sample", profile: "dungeon", style: "old-school", labelMode: "numbers", waterLevel: 0, showProps: true },
-  { file: "02-cave-flooded-hollow.png", title: "Flooded Hollow", seed: "flooded-hollow-sample", profile: "cave", style: "stone", labelMode: "off", waterLevel: 0.65, showProps: true },
-  { file: "03-wilderness-bridge.png", title: "The Broken Bridge", seed: "broken-bridge-sample", profile: "wilderness", style: "wilderness", labelMode: "off", waterLevel: 0.35, showProps: true }
+  { file: "01-one-shot-ironbriar.png", title: "Ironbriar Cache", seed: "ironbriar-one-shot", profile: "dungeon", style: "old-school", labelMode: "numbers", waterLevel: 0, showProps: true },
+  { file: "02-one-shot-crypt.png", title: "The Bell Crypt", seed: "bell-crypt-one-shot", profile: "dungeon", style: "stone", labelMode: "off", waterLevel: 0, showProps: true },
+  { file: "03-one-shot-smugglers.png", title: "Smugglers' Vault", seed: "smugglers-vault-one-shot", profile: "dungeon", style: "tactical", labelMode: "names", waterLevel: 0, showProps: true }
 ];
 
 for (const sample of samples) {
