@@ -1,8 +1,8 @@
 # AMBA Map Engine
 
-Standalone seeded battlemap-image generation for AMBA. The app has three provider paths in its contract—Watabou, Gozzys, and AMBA Native—and currently ships a native deterministic SVG/PNG preview for dungeon rooms, caves, and wilderness encounters.
+Standalone seeded tactical-map generation for AMBA. The app has three provider paths in its contract—Watabou, Gozzys, and AMBA Native—and currently ships a native deterministic SVG/PNG preview for dungeon rooms, caves, and wilderness encounters.
 
-The authoring direction also takes cues from Inkarnate: maps will become layered scenes with reusable, license-aware assets, copyable scene groups, custom layers, autosave, and high-resolution exports. Those are deliberately sequenced after the current seeded image-generation slice.
+This is intentionally not a general-purpose map editor. Its job is to generate the same useful encounter-scale maps as the classic procedural tools, modernize the controls, and produce richer metadata for Foundry and other VTTs.
 
 ## Stack
 
@@ -53,6 +53,23 @@ The generated response includes Foundry-oriented scene metadata: image dimension
 
 The generator keeps presentation controls explicit and reversible: label mode (`off`, `numbers`, `names`), title visibility, tactical props, water level, style preset, grid visibility, and density are all request parameters. Labels are rendered as their own controlled pass, so a clean Foundry image does not inherit unwanted room text.
 
+## Primary output: VTT-ready encounter maps
+
+The canonical output should eventually be a small VTT scene bundle, not just a bitmap:
+
+- background image with exact pixel dimensions;
+- square grid size and feet-per-square scale;
+- opaque wall segments;
+- doors with stable IDs and states;
+- windows, secret doors, and one-way passages;
+- difficult-terrain and terrain regions;
+- light sources and darkness regions;
+- room/feature/encounter anchors;
+- seed, generator version, parameter set, and export hashes;
+- clean player-safe and annotated GM variants.
+
+The map image remains useful on its own, but VTT geometry and metadata are the product's main differentiator.
+
 ## AMBA hooks
 
 The provider and artifact fields are already modeled in the shared request/result contract. The next integration slice should add an AMBA adapter that can publish the generated SVG/PNG and canonical map metadata as an AMBA map artifact without making AMBA a runtime dependency.
@@ -60,8 +77,8 @@ The provider and artifact fields are already modeled in the shared request/resul
 ## Product direction
 
 - **Now:** seed + provider + battlemap profile → deterministic grid-aligned map image preview and PNG export.
-- **Next:** persist render layers and map revisions; add PNG export and a layer visibility panel.
-- **Then:** add brush/shape overlays, reusable scene stamps, custom asset uploads, copy/paste groups, autosave, and player-safe/GM-safe layer variants.
-- **Later:** add high-resolution tiled export, VTT geometry, and AMBA-linked encounter anchors.
+- **Next:** implement real dungeon/cave/wilderness algorithms and derive walls, doors, and room anchors from the same topology.
+- **Then:** add UVTT/Foundry scene bundles, terrain/light regions, player-safe/GM-safe variants, and AMBA-linked encounter anchors.
+- **Later:** add limited compositing controls only where they improve VTT readability; do not become a full cartography editor.
 
-Reference: [Inkarnate FAQ and feature overview](https://inkarnate.com/faq), [Inkarnate 2.0 changelog](https://feedback.inkarnate.com/changelog/inkarnate-20-star).
+Inkarnate is a UX reference for clarity and layer visibility, not our product scope: [FAQ](https://inkarnate.com/faq), [2.0 changelog](https://feedback.inkarnate.com/changelog/inkarnate-20-star).
