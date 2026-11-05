@@ -51,6 +51,8 @@ Example:
 
 The generated response includes Foundry-oriented scene metadata: image dimensions, grid size in pixels, grid distance, and grid units. PNG export is available at `POST /api/maps/render/png`.
 
+The generator keeps presentation controls explicit and reversible: label mode (`off`, `numbers`, `names`), title visibility, tactical props, water level, style preset, grid visibility, and density are all request parameters. Labels are rendered as their own controlled pass, so a clean Foundry image does not inherit unwanted room text.
+
 ## AMBA hooks
 
 The provider and artifact fields are already modeled in the shared request/result contract. The next integration slice should add an AMBA adapter that can publish the generated SVG/PNG and canonical map metadata as an AMBA map artifact without making AMBA a runtime dependency.

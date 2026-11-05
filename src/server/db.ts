@@ -6,7 +6,7 @@ const memory: GeneratedMap[] = [];
 
 export async function saveMap(map: GeneratedMap) {
   try {
-    return await prisma.map.create({ data: { title: map.title || "Untitled map", seed: map.seed, provider: map.provider, profile: map.profile, svg: map.svg, parameters: { width: map.width, height: map.height, density: map.density, grid: map.grid } } });
+    return await prisma.map.create({ data: { title: map.title || "Untitled map", seed: map.seed, provider: map.provider, profile: map.profile, svg: map.svg, parameters: { width: map.width, height: map.height, density: map.density, grid: map.grid, cellSize: map.cellSize, scaleFeet: map.scaleFeet, labelMode: map.labelMode, showTitle: map.showTitle, showProps: map.showProps, waterLevel: map.waterLevel, style: map.style } } });
   } catch {
     memory.unshift(map);
     return map;

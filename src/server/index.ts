@@ -19,7 +19,7 @@ app.post("/api/maps/generate", async (req, res) => {
     provider: body.provider === "watabou" || body.provider === "gozzys" ? body.provider : "amba-native",
     profile: body.profile === "cave" || body.profile === "wilderness" ? body.profile : "dungeon",
     width: Number(body.width || 32), height: Number(body.height || 24), density: Number(body.density || 0.55), grid: body.grid !== false,
-    cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5)
+    cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5), labelMode: body.labelMode || "off", showTitle: body.showTitle !== false, showProps: body.showProps !== false, waterLevel: Number(body.waterLevel || 0), style: body.style || "tactical"
   });
   if (body.persist) await saveMap(map);
   res.json(map);
@@ -31,7 +31,7 @@ app.post("/api/maps/render/png", async (req, res) => {
     provider: body.provider === "watabou" || body.provider === "gozzys" ? body.provider : "amba-native",
     profile: body.profile === "cave" || body.profile === "wilderness" ? body.profile : "dungeon",
     width: Number(body.width || 32), height: Number(body.height || 24), density: Number(body.density || 0.55), grid: body.grid !== false,
-    cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5)
+    cellSize: Number(body.cellSize || 70), scaleFeet: Number(body.scaleFeet || 5), labelMode: body.labelMode || "off", showTitle: body.showTitle !== false, showProps: body.showProps !== false, waterLevel: Number(body.waterLevel || 0), style: body.style || "tactical"
   });
   const png = await sharp(Buffer.from(map.svg)).png().toBuffer();
   res.type("png").send(png);

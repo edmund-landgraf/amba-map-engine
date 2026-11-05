@@ -35,7 +35,12 @@ export function generateMap(input: MapRequest): GeneratedMap {
     density: clamp(Number(input.density || 0.55), 0.2, 0.9),
     grid: Boolean(input.grid),
     cellSize: clamp(Math.round(input.cellSize || 70), 20, 200),
-    scaleFeet: clamp(Math.round(input.scaleFeet || 5), 1, 100)
+    scaleFeet: clamp(Math.round(input.scaleFeet || 5), 1, 100),
+    labelMode: input.labelMode || "off",
+    showTitle: input.showTitle !== false,
+    showProps: input.showProps !== false,
+    waterLevel: clamp(Number(input.waterLevel || 0), 0, 1),
+    style: input.style || (input.profile === "wilderness" ? "wilderness" : input.profile === "cave" ? "stone" : "tactical")
   };
   const rng = random(`${request.seed}/${request.provider}/${request.profile}`);
   const rooms: Room[] = [];
@@ -49,11 +54,13 @@ export function generateMap(input: MapRequest): GeneratedMap {
     if (!overlaps) rooms.push({ x, y, w, h });
   }
   rooms.sort((a, b) => a.x + a.y - (b.x + b.y));
-  const colors = request.profile === "wilderness"
-    ? { bg: "#dce8d1", floor: "#bdcfab", wall: "#476348", accent: "#7fa36d", detail: "#8f6f4d" }
-    : request.profile === "cave"
-      ? { bg: "#18212b", floor: "#47515b", wall: "#9aa6ad", accent: "#4c7890", detail: "#c4a66a" }
-      : { bg: "#17181d", floor: "#665e58", wall: "#d4c8b5", accent: "#a68b69", detail: "#332f2a" };
+  const colors = request.style === "wilderness"
+    ? { bg: "#dce8d1", floor: "#bdcfab", wall: "#476348", accent: "#7fa36d", detail: "#8f6f4d", text: "#314a34" }
+    : request.style === "stone"
+      ? { bg: "#18212b", floor: "#47515b", wall: "#9aa6ad", accent: "#4c7890", detail: "#c4a66a", text: "#e0e5e5" }
+      : request.style === "old-school"
+        ? { bg: "#eee5cf", floor: "#d9c9a8", wall: "#3e3428", accent: "#a88d63", detail: "#705b42", text: "#392d21" }
+        : { bg: "#17181d", floor: "#665e58", wall: "#d4c8b5", accent: "#a68b69", detail: "#332f2a", text: "#f1e8da" };
   const scale = 24;
   const width = request.width * scale;
   const height = request.height * scale;
@@ -72,22 +79,30 @@ export function generateMap(input: MapRequest): GeneratedMap {
       lines.push(`<path d="M ${px} ${py} L ${cx} ${py} L ${cx} ${cy}" fill="none" stroke="${colors.wall}" stroke-width="${Math.max(8, scale * 0.65)}" stroke-linecap="square"/>`);
       lines.push(`<path d="M ${px} ${py} L ${cx} ${py} L ${cx} ${cy}" fill="none" stroke="${corridor}" stroke-width="${Math.max(5, scale * 0.42)}" stroke-linecap="square"/>`);
     }
-    if (request.profile === "wilderness") {
+    if (request.showProps && request.profile === "wilderness") {
       for (let p = 0; p < 2 + Math.floor(rng() * 4); p += 1) {
         const tx = x + 8 + rng() * Math.max(8, w - 16), ty = y + 8 + rng() * Math.max(8, h - 16);
         lines.push(`<circle cx="${tx}" cy="${ty}" r="${3 + rng() * 4}" fill="${colors.detail}" opacity=".72"/>`);
       }
-    } else if (request.profile === "cave") {
+    } else if (request.showProps && request.profile === "cave") {
       lines.push(`<circle cx="${x + w * 0.72}" cy="${y + h * 0.35}" r="${Math.max(6, scale * 0.38)}" fill="${colors.accent}" opacity=".7"/>`);
-    } else {
+    } else if (request.showProps) {
       lines.push(`<path d="M ${x + w * .2} ${y + h * .2} h ${w * .6} M ${x + w * .2} ${y + h * .35} h ${w * .45}" stroke="${colors.detail}" stroke-width="2" opacity=".75"/>`);
+    }
+    if (request.waterLevel > 0 && (request.profile === "cave" || request.profile === "wilderness") && rng() < request.waterLevel) {
+      lines.push(`<path d="M ${x + w * .16} ${y + h * .68} Q ${x + w * .5} ${y + h * (.55 + rng() * .2)} ${x + w * .84} ${y + h * .68}" fill="none" stroke="${colors.accent}" stroke-width="${Math.max(4, scale * .22)}" opacity=".8"/>`);
+    }
+    if (request.labelMode !== "off") {
+      const label = request.labelMode === "numbers" ? String(index + 1).padStart(2, "0") : ["Entry", "Crossing", "Chamber", "Watch", "Vault", "Exit"][index % 6];
+      lines.push(`<text x="${x + w / 2}" y="${y + h / 2 + 5}" text-anchor="middle" fill="${colors.text}" font-family="system-ui, sans-serif" font-size="${Math.max(10, scale * .48)}" font-weight="700" opacity=".9">${label}</text>`);
     }
   });
   if (request.grid) {
     for (let x = 0; x <= width; x += scale) lines.push(`<path d="M${x} 0V${height}" stroke="${colors.wall}" stroke-opacity=".14"/>`);
     for (let y = 0; y <= height; y += scale) lines.push(`<path d="M0 ${y}H${width}" stroke="${colors.wall}" stroke-opacity=".14"/>`);
   }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${request.title}"><title>${request.title}</title>${lines.join("")}<text x="${scale}" y="${height - scale * .45}" fill="${colors.wall}" font-family="system-ui, sans-serif" font-size="${scale * .55}" opacity=".8">${request.title}</text></svg>`;
+  const title = request.showTitle ? `<text x="${scale}" y="${height - scale * .45}" fill="${colors.text}" font-family="system-ui, sans-serif" font-size="${scale * .55}" opacity=".8">${request.title}</text>` : "";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${request.title}"><title>${request.title}</title>${lines.join("")}${title}</svg>`;
   return {
     ...request,
     svg,

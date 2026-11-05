@@ -1,5 +1,7 @@
 export type Provider = "watabou" | "gozzys" | "amba-native";
 export type Profile = "dungeon" | "cave" | "wilderness";
+export type LabelMode = "off" | "numbers" | "names";
+export type MapStyle = "tactical" | "old-school" | "stone" | "wilderness";
 
 export type MapRequest = {
   title?: string;
@@ -12,6 +14,11 @@ export type MapRequest = {
   grid: boolean;
   cellSize: number;
   scaleFeet: number;
+  labelMode: LabelMode;
+  showTitle: boolean;
+  showProps: boolean;
+  waterLevel: number;
+  style: MapStyle;
 };
 
 export type GeneratedMap = MapRequest & {
